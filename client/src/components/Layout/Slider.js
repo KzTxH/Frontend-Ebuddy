@@ -1,10 +1,10 @@
 import React from 'react';
-import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import Slider from "react-slick";
 import './Slider.css';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
 
-const SliderComponent = () => {
+const CustomSlider = () => {
   const settings = {
     dots: true,
     infinite: true,
@@ -13,41 +13,24 @@ const SliderComponent = () => {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
-    arrows: true,
   };
 
+  const slides = [
+    { id: 1, image: 'https://via.placeholder.com/1920x1080?text=Slide+1', text: 'This is slide 1' },
+    { id: 2, image: 'https://via.placeholder.com/1920x1080?text=Slide+2', text: 'This is slide 2' },
+    { id: 3, image: 'https://via.placeholder.com/1920x1080?text=Slide+3', text: 'This is slide 3' },
+  ];
+
   return (
-    <Slider {...settings} className="slider">
-      <div className="slide">
-        <img src="https://via.placeholder.com/1920x1080" alt="Slide 1" />
-        <div className="slide-text">
-          <h1>Welcome to My App</h1>
-          <p>This is a simple, elegant, and responsive app built with React and Bootstrap.</p>
+    <Slider {...settings}>
+      {slides.map(slide => (
+        <div key={slide.id} className="slide">
+          <img src={slide.image} alt={`Slide ${slide.id}`} />
+          <div className="slide-text">{slide.text}</div>
         </div>
-      </div>
-      <div className="slide">
-        <img src="https://via.placeholder.com/1920x1080" alt="Slide 2" />
-        <div className="slide-text">
-          <h1>Feature One</h1>
-          <p>Description of feature one.</p>
-        </div>
-      </div>
-      <div className="slide">
-        <img src="https://via.placeholder.com/1920x1080" alt="Slide 3" />
-        <div className="slide-text">
-          <h1>Feature Two</h1>
-          <p>Description of feature two.</p>
-        </div>
-      </div>
-      <div className="slide">
-        <img src="https://via.placeholder.com/1920x1080" alt="Slide 4" />
-        <div className="slide-text">
-          <h1>Feature Three</h1>
-          <p>Description of feature three.</p>
-        </div>
-      </div>
+      ))}
     </Slider>
   );
 };
 
-export default SliderComponent;
+export default CustomSlider;

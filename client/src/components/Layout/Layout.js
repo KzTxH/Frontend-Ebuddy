@@ -15,14 +15,11 @@ const Layout = () => {
   return (
     <div className="layout-container">
       <header className="layout-header">
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+        <nav className="navbar">
           <div className="container">
             <Link className="navbar-brand" to="/">My App</Link>
-            <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span className="navbar-toggler-icon"></span>
-            </button>
-            <div className="collapse navbar-collapse" id="navbarNav">
-              <ul className="navbar-nav ml-auto">
+            <div className="navbar-menu">
+              <ul className="navbar-nav">
                 <li className="nav-item">
                   <Link className="nav-link" to="/">Home</Link>
                 </li>
@@ -48,7 +45,7 @@ const Layout = () => {
       <main className="layout-content">
         <Outlet />
       </main>
-      <footer className="layout-footer bg-dark text-white text-center py-3">
+      <footer className="layout-footer">
         <p>&copy; 2023 My App. All Rights Reserved.</p>
       </footer>
     </div>
