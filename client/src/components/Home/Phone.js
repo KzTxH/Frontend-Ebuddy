@@ -18,27 +18,6 @@ const Phone = () => {
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
   const [socket, setSocket] = useState(null);
 
-  useEffect(() => {
-    const handleUnload = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        await axios.post(
-          `${API_BASE_URL}/api/phone/deactivate`,
-          { deviceName },
-          { headers: { 'x-auth-token': token } }
-        );
-      } catch (error) {
-        console.error('Error deactivating device:', error);
-      }
-    };
-
-    window.addEventListener('beforeunload', handleUnload);
-    return () => {
-      handleUnload();
-      window.removeEventListener('beforeunload', handleUnload);
-    };
-  }, [deviceName]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -55,6 +34,7 @@ const Phone = () => {
       setStreamUrl(response.data.streamUrl);
       console.log('Server Response:', response.data);
 
+      // Open Radio Broadcast after receiving server response
       const newSocket = io(API_BASE_URL);
       setSocket(newSocket);
 
@@ -99,14 +79,15 @@ const Phone = () => {
     if (nextIndex < audioFiles.length) {
       setCurrentAudioIndex(nextIndex);
     } else {
-      setCurrentAudioIndex(0);
+      setCurrentAudioIndex(0); // Reset to the first file if we reach the end
     }
   }, [currentAudioIndex, audioFiles]);
 
   useEffect(() => {
     if (audioRef.current && audioFiles[currentAudioIndex]) {
-      console.log('Setting audio source to:', `${API_BASE_URL}/audio/${deviceName}/${audioFiles[currentAudioIndex]}`);
-      audioRef.current.src = `${API_BASE_URL}/audio/${deviceName}/${audioFiles[currentAudioIndex]}`;
+      const audioSrc = `${API_BASE_URL}/audio/${deviceName}/${audioFiles[currentAudioIndex]}`;
+      console.log('Setting audio source to:', audioSrc);
+      audioRef.current.src = audioSrc;
       audioRef.current.load();
       audioRef.current.play().catch((error) => {
         console.error('Error playing audio:', error);
@@ -125,6 +106,37 @@ const Phone = () => {
       }
     };
   }, [handleAudioEnded]);
+
+  useEffect(() => {
+    const handleUnload = (event) => {
+      // This function runs when the component is unmounted or the page is reloaded/navigated away from
+      const deactivateDevice = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.post(
+            `${API_BASE_URL}/api/phone/deactivate`,
+            { deviceName },
+            { headers: { 'x-auth-token': token } }
+          );
+          console.log('Device deactivated');
+        } catch (error) {
+          console.error('Error deactivating device:', error);
+        }
+      };
+
+      if (isSubmitted) {
+        deactivateDevice();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+      window.removeEventListener('pagehide', handleUnload);
+    };
+  }, [deviceName, isSubmitted]);
 
   return (
     <div className="phone-container">
