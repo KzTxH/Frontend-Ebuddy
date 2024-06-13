@@ -19,22 +19,24 @@ const Layout = () => {
           <div className="container">
             <Link className="navbar-brand" to="/">My App</Link>
             <div className="navbar-menu">
-              <ul className="navbar-nav">
+              <ul className="navbar">
                 <li className="nav-item">
                   <Link className="nav-link" to="/">Home</Link>
                 </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/dashboard">Bảng điều khiển</Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/phone">Thiết bị</Link>
-                </li>
-                {auth ? (
+                {auth && (
                   <>
                     <li className="nav-item">
-                      <button className="nav-link btn btn-link" onClick={handleLogout}>Logout</button>
+                      <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                    </li>
+                    <li className="nav-item">
+                      <Link className="nav-link" to="/phone">Devices</Link>
                     </li>
                   </>
+                )}
+                {auth ? (
+                  <li className="nav-item">
+                    <button className="nav-link btn btn-link" onClick={handleLogout}>Logout</button>
+                  </li>
                 ) : (
                   <li className="nav-item">
                     <Link className="nav-link" to="/login">Login</Link>

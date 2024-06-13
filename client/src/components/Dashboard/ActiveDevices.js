@@ -1,21 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
+import { AuthContext } from '../../contexts/AuthContext';
 import { io } from 'socket.io-client';
+import Button from 'react-bootstrap/Button';
+import './ActiveDevices.css';
 import config from '../../config';
 
 const API_BASE_URL = config.apiUrl;
 
-const ActiveDevices = () => {
-  const [devices, setDevices] = useState([]);
+const ActiveDevices = ({ setShowLinkModal, setSelectedDevice }) => {
+  const [activeDevices, setActiveDevices] = useState([]);
+  const { auth } = useContext(AuthContext);
+  const socket = useRef(null);
+
 
   useEffect(() => {
     const fetchActiveDevices = async () => {
       try {
-        const token = localStorage.getItem('token'); // Lấy token từ localStorage
+        const token = localStorage.getItem('token');
         const response = await axios.get(`${API_BASE_URL}/api/phone/active-devices`, {
           headers: { 'x-auth-token': token }
         });
-        setDevices(response.data);
+        setActiveDevices(response.data);
       } catch (error) {
         console.error('Error fetching active devices:', error);
       }
@@ -23,40 +29,47 @@ const ActiveDevices = () => {
 
     fetchActiveDevices();
 
-    const socket = io(API_BASE_URL);
-
-    socket.on('connect', () => {
-      console.log('Connected to server');
-    });
-
-    socket.on('updateActiveDevices', (updatedDevices) => {
-      console.log('Updated active devices:', updatedDevices);
-      setDevices(updatedDevices);
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    socket.current = io(API_BASE_URL);
+    socket.current.on('updateActiveDevices', (devices) => {
+      setActiveDevices(devices);
     });
 
     return () => {
-      socket.disconnect();
+      socket.current.disconnect();
     };
-  }, []);
+  }, [auth]);
 
   return (
-    <div>
-      <h2>Thiết bị đang hoạt động</h2>
-      <ul className="list-group">
-        {devices.length > 0 ? (
-          devices.map((device) => (
-            <li key={device._id} className="list-group-item">
-              {device.deviceName} - {device.tiktokUsername}
-            </li>
-          ))
-        ) : (
-          <li className="list-group-item">Không có thiết bị nào đang hoạt động.</li>
-        )}
-      </ul>
+    <div className="active-devices-container">
+      <h2>Thiết Bị Đang Hoạt Động</h2>
+      <table className="active-devices-table">
+        <thead>
+          <tr>
+            <th>Tên Máy</th>
+            <th>Tên Tài Khoản TikTok</th>
+            <th>Cài Đặt AI</th>
+          </tr>
+        </thead>
+        <tbody>
+          {activeDevices.map((device) => (
+            <tr key={device._id}>
+              <td>{device.deviceName}</td>
+              <td>{device.tiktokUsername}</td>
+              <td>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setSelectedDevice(device);
+                    setShowLinkModal(true);
+                  }}
+                >
+                  Cài Đặt AI
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
