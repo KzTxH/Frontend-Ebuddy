@@ -1,0 +1,65 @@
+.phone-container {
+  padding-top: 6rem; /* Thêm khoảng trống phía trên cho phần nội dung để không bị che bởi header */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; /* Đảm bảo trang chiếm toàn bộ chiều cao của màn hình */
+  background-color: #f4f4f4; /* Màu nền nhẹ nhàng */
+}
+
+.phone-form {
+  background-color: white; /* Màu nền trắng cho biểu mẫu */
+  padding: 2rem; /* Padding bên trong biểu mẫu */
+  border-radius: 8px; /* Bo tròn các góc biểu mẫu */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto; /* Căn giữa biểu mẫu */
+}
+
+.input-group {
+  margin-bottom: 1.5rem; /* Khoảng cách giữa các nhóm input */
+}
+
+.input-group label {
+  display: block; /* Hiển thị nhãn trên dòng riêng */
+  margin-bottom: 0.5rem; /* Khoảng cách dưới nhãn */
+  font-weight: bold; /* In đậm nhãn */
+}
+
+.input-group input {
+  width: 100%; /* Chiếm toàn bộ chiều rộng của nhóm input */
+  padding: 0.75rem; /* Padding bên trong input */
+  font-size: 1rem; /* Kích thước chữ */
+  border: 1px solid #ddd; /* Viền nhẹ */
+  border-radius: 4px; /* Bo tròn các góc input */
+  box-sizing: border-box; /* Đảm bảo padding không làm thay đổi kích thước tổng thể */
+}
+
+button {
+  width: 100%; /* Chiếm toàn bộ chiều rộng */
+  padding: 0.75rem; /* Padding bên trong button */
+  font-size: 1rem; /* Kích thước chữ */
+  color: white; /* Màu chữ trắng */
+  background-color: #ff6600; /* Màu nền cam */
+  border: none; /* Không viền */
+  border-radius: 4px; /* Bo tròn các góc button */
+  cursor: pointer; /* Đổi con trỏ thành tay */
+  transition: background-color 0.3s ease; /* Hiệu ứng chuyển đổi màu nền */
+}
+
+button:hover {
+  background-color: #e65c00; /* Màu nền khi hover */
+}
+
+.radio-broadcast {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+audio {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 1rem;
+}
