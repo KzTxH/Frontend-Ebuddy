@@ -7,6 +7,10 @@
 .layout-header {
   background-color: #ff7f50;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
 }
 
 .navbar {
@@ -24,7 +28,6 @@
 
 .navbar-menu {
   margin-left: auto;
-  display: flex;
 }
 
 .navbar-nav {
@@ -60,6 +63,7 @@
 .layout-content {
   flex: 1;
   padding: 20px;
+  margin-top: 60px; /* Adjust this value based on the height of your header */
 }
 
 .layout-footer {
