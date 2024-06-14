@@ -17,7 +17,7 @@ const Layout = () => {
       <header className="layout-header">
         <nav className="navbar">
           <div className="container">
-            <Link className="navbar-brand" to="/">My App</Link>
+            <Link className="navbar-brand" to="/">Ebuddy</Link>
             <div className="navbar-menu">
               <ul className="navbar">
                 <li className="nav-item">
@@ -51,7 +51,7 @@ const Layout = () => {
         <Outlet />
       </main>
       <footer className="layout-footer">
-        <p>&copy; 2023 My App. All Rights Reserved.</p>
+        <p>&copy; 2024 Ebuddy Group. All Rights Reserved.</p>
       </footer>
     </div>
   );
