@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import './ActiveDevices.css';
@@ -40,6 +41,15 @@ const ActiveDevices = () => {
 
     fetchDevices();
     fetchAISettings();
+
+    const socket = io(API_BASE_URL);
+    socket.on('updateActiveDevices', (updatedDevices) => {
+      setDevices(updatedDevices);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const handleLinkAISettings = async () => {
@@ -95,28 +105,25 @@ const ActiveDevices = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="4">Không có thiết bị nào</td>
+              <td colSpan="4">No devices found</td>
             </tr>
           )}
         </tbody>
       </table>
+
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Liên Kết Cài Đặt AI</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <label>Chọn Cài Đặt AI:</label>
           <select
             className="form-control"
             value={selectedAISetting}
             onChange={(e) => setSelectedAISetting(e.target.value)}
-            required
           >
             <option value="">Chọn Cài Đặt AI</option>
             {aiSettings.map((setting) => (
-              <option key={setting._id} value={setting._id}>
-                {setting.productName}
-              </option>
+              <option key={setting._id} value={setting._id}>{setting.productName}</option>
             ))}
           </select>
         </Modal.Body>
