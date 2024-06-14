@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { AuthContext } from '../../contexts/AuthContext';
-import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+import { io } from 'socket.io-client';
 import './AISettings.css';
 import config from '../../config';
 
@@ -11,66 +11,87 @@ const API_BASE_URL = config.apiUrl;
 const AISettings = () => {
   const [aiSettings, setAiSettings] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [currentSetting, setCurrentSetting] = useState(null);
   const [productName, setProductName] = useState('');
-  const [textInputs, setTextInputs] = useState(['']);
-  const [editId, setEditId] = useState(null);
-  const { auth } = useContext(AuthContext);
+  const [inputFields, setInputFields] = useState(['']);
 
+  useEffect(() => {
+    const fetchAISettings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_BASE_URL}/api/ai-settings`, {
+          headers: { 'x-auth-token': token }
+        });
+        setAiSettings(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error fetching AI settings:', error);
+      }
+    };
 
-  const handleShowModal = () => {
-    setProductName('');
-    setTextInputs(['']);
-    setEditId(null);
-    setShowModal(true);
+    fetchAISettings();
+
+    const socket = io(API_BASE_URL);
+    socket.on('updateAISettings', (settings) => {
+      console.log(settings)
+      setAiSettings(Array.isArray(settings) ? settings : []);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const handleAddField = () => {
+    setInputFields([...inputFields, '']);
   };
 
-  const handleCloseModal = () => setShowModal(false);
-
-  const handleAddInput = () => setTextInputs([...textInputs, '']);
-
-  const handleInputChange = (index, value) => {
-    const newInputs = [...textInputs];
-    newInputs[index] = value;
-    setTextInputs(newInputs);
+  const handleRemoveField = (index) => {
+    const fields = [...inputFields];
+    fields.splice(index, 1);
+    setInputFields(fields);
   };
 
-  const handleSaveSettings = async () => {
-    if (!productName) {
-      alert('Tên Sản Phẩm là bắt buộc');
-      return;
-    }
+  const handleFieldChange = (index, value) => {
+    const fields = [...inputFields];
+    fields[index] = value;
+    setInputFields(fields);
+  };
 
+  const handleSave = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (editId) {
-        await axios.put(
-          `${API_BASE_URL}/api/ai-settings/${editId}`,
-          { productName, settings: textInputs },
-          { headers: { 'x-auth-token': token } }
-        );
+      if (editMode) {
+        await axios.put(`${API_BASE_URL}/api/ai-settings/${currentSetting._id}`, {
+          productName,
+          fields: inputFields
+        }, {
+          headers: { 'x-auth-token': token }
+        });
       } else {
-        await axios.post(
-          `${API_BASE_URL}/api/ai-settings`,
-          { productName, settings: textInputs },
-          { headers: { 'x-auth-token': token } }
-        );
+        await axios.post(`${API_BASE_URL}/api/ai-settings`, {
+          productName,
+          fields: inputFields
+        }, {
+          headers: { 'x-auth-token': token }
+        });
       }
 
-      const response = await axios.get(`${API_BASE_URL}/api/ai-settings`, {
-        headers: { 'x-auth-token': token }
-      });
-      setAiSettings(response.data);
-
-      handleCloseModal();
+      setShowModal(false);
+      setProductName('');
+      setInputFields(['']);
+      setCurrentSetting(null);
+      setEditMode(false);
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('Error saving AI setting:', error);
     }
   };
 
   const handleEdit = (setting) => {
+    setCurrentSetting(setting);
     setProductName(setting.productName);
-    setTextInputs(setting.settings);
-    setEditId(setting._id);
+    setInputFields(setting.fields || []);
+    setEditMode(true);
     setShowModal(true);
   };
 
@@ -80,94 +101,71 @@ const AISettings = () => {
       await axios.delete(`${API_BASE_URL}/api/ai-settings/${id}`, {
         headers: { 'x-auth-token': token }
       });
-
-      const response = await axios.get(`${API_BASE_URL}/api/ai-settings`, {
-        headers: { 'x-auth-token': token }
-      });
-      setAiSettings(response.data);
     } catch (error) {
-      console.error('Error deleting settings:', error);
+      console.error('Error deleting AI setting:', error);
     }
   };
 
-  useEffect(() => {
-    const fetchAISettings = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_BASE_URL}/api/ai-settings`, {
-          headers: { 'x-auth-token': token }
-        });
-        setAiSettings(response.data);
-      } catch (error) {
-        console.error('Error fetching AI settings:', error);
-      }
-    };
-
-    fetchAISettings();
-  }, [auth]);
-
   return (
-    <div>
+    <div className="ai-settings-container">
       <h2>Cài Đặt AI</h2>
-      <Button variant="primary" onClick={handleShowModal} className="add-button">
-        Thêm
-      </Button>
-      <table>
+      <Button variant="primary" onClick={() => setShowModal(true)}>Thêm</Button>
+      <table className="ai-settings-table">
         <thead>
           <tr>
             <th>Tên Sản Phẩm</th>
-            <th>Cài Đặt</th>
             <th>Hành Động</th>
           </tr>
         </thead>
         <tbody>
-          {aiSettings.map((setting) => (
-            <tr key={setting._id}>
-              <td>{setting.productName}</td>
-              <td>
-                <ul>
-                  {setting.settings.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              </td>
-              <td>
-                <Button variant="secondary" onClick={() => handleEdit(setting)}>Sửa</Button>
-                <Button variant="danger" onClick={() => handleDelete(setting._id)}>Xóa</Button>
-              </td>
+          {aiSettings.length > 0 ? (
+            aiSettings.map((setting) => (
+              <tr key={setting._id}>
+                <td>{setting.productName}</td>
+                <td>
+                  <Button variant="secondary" onClick={() => handleEdit(setting)}>Sửa</Button>
+                  <Button variant="danger" onClick={() => handleDelete(setting._id)}>Xóa</Button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="2">Không có cài đặt AI nào</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
-
-      <Modal show={showModal} onHide={handleCloseModal}>
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>{editId ? 'Sửa Cài Đặt AI' : 'Thêm Cài Đặt AI'}</Modal.Title>
+          <Modal.Title>{editMode ? 'Sửa' : 'Thêm'} Cài Đặt AI</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <input
             type="text"
+            className="form-control mb-2"
             placeholder="Tên Sản Phẩm"
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            className="form-control mb-2"
             required
           />
-          {textInputs.map((input, index) => (
-            <input
-              key={index}
-              type="text"
-              placeholder={`Nhập thông tin ${index + 1}`}
-              value={input}
-              onChange={(e) => handleInputChange(index, e.target.value)}
-              className="form-control mb-2"
-            />
+          {inputFields.map((field, index) => (
+            <div key={index} className="input-group mb-2">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Nội dung"
+                value={field}
+                onChange={(e) => handleFieldChange(index, e.target.value)}
+                required
+              />
+              <Button variant="danger" onClick={() => handleRemoveField(index)}>Xóa</Button>
+            </div>
           ))}
-          <Button variant="secondary" onClick={handleAddInput}>Thêm</Button>
+          <Button variant="secondary" onClick={handleAddField}>Thêm</Button>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>Đóng</Button>
-          <Button variant="primary" onClick={handleSaveSettings}>Lưu</Button>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>Đóng</Button>
+          <Button variant="primary" onClick={handleSave}>{editMode ? 'Lưu' : 'Thêm'}</Button>
         </Modal.Footer>
       </Modal>
     </div>

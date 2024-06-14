@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import axios from 'axios';  // Import axios
-import { AuthContext } from '../../contexts/AuthContext';
-import { io } from 'socket.io-client';
+import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import ActiveDevices from './ActiveDevices';
 import AISettings from './AISettings';
+import { AuthContext } from '../../contexts/AuthContext';
+import { io } from 'socket.io-client';
 import './Dashboard.css';
 import config from '../../config';
 
@@ -16,7 +16,7 @@ const Dashboard = () => {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [selectedAISetting, setSelectedAISetting] = useState('');
-  const [aiSettings, setAiSettings] = useState([]); // Define aiSettings here
+  const [aiSettings, setAiSettings] = useState([]);
   const { auth } = useContext(AuthContext);
 
   const handleLinkAISetting = async () => {
@@ -28,14 +28,19 @@ const Dashboard = () => {
       }, {
         headers: { 'x-auth-token': token }
       });
-
+  
       handleCloseLinkModal();
     } catch (error) {
       console.error('Error linking AI setting:', error);
     }
   };
+  
 
-  const handleCloseLinkModal = () => setShowLinkModal(false);
+  const handleCloseLinkModal = () => {
+    setShowLinkModal(false);
+    setSelectedDevice(null);
+    setSelectedAISetting('');
+  };
 
   useEffect(() => {
     const fetchAISettings = async () => {
@@ -44,13 +49,22 @@ const Dashboard = () => {
         const response = await axios.get(`${API_BASE_URL}/api/ai-settings`, {
           headers: { 'x-auth-token': token }
         });
-        setAiSettings(response.data);
+        setAiSettings(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Error fetching AI settings:', error);
       }
     };
 
     fetchAISettings();
+
+    const socket = io(API_BASE_URL);
+    socket.on('updateAISettings', (settings) => {
+      setAiSettings(Array.isArray(settings) ? settings : []);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [auth]);
 
   return (
@@ -80,9 +94,13 @@ const Dashboard = () => {
             className="form-control mb-2"
           >
             <option value="">Chọn Cài Đặt AI</option>
-            {aiSettings.map((setting) => (
-              <option key={setting._id} value={setting._id}>{setting.productName}</option>
-            ))}
+            {aiSettings.length === 0 ? (
+              <option disabled>Không có cài đặt AI nào</option>
+            ) : (
+              aiSettings.map((setting) => (
+                <option key={setting._id} value={setting._id}>{setting.productName}</option>
+              ))
+            )}
           </select>
         </Modal.Body>
         <Modal.Footer>

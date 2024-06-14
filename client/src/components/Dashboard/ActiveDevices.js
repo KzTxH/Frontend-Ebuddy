@@ -8,11 +8,11 @@ import config from '../../config';
 
 const API_BASE_URL = config.apiUrl;
 
+
 const ActiveDevices = ({ setShowLinkModal, setSelectedDevice }) => {
   const [activeDevices, setActiveDevices] = useState([]);
   const { auth } = useContext(AuthContext);
   const socket = useRef(null);
-
 
   useEffect(() => {
     const fetchActiveDevices = async () => {
