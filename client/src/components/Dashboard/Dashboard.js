@@ -49,6 +49,7 @@ const Dashboard = () => {
         const response = await axios.get(`${API_BASE_URL}/api/ai-settings`, {
           headers: { 'x-auth-token': token }
         });
+        console.log(aiSettings)
         setAiSettings(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Error fetching AI settings:', error);
