@@ -12,11 +12,64 @@ const Phone = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [streamUrl, setStreamUrl] = useState('');
-
-  const audioRef = useRef(null);
   const [audioFiles, setAudioFiles] = useState([]);
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
-  const [socket, setSocket] = useState(null);
+
+  const audioRef = useRef(null);
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    const socket = io(API_BASE_URL, {
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('Connected to server');
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log(`Disconnected: ${reason}`);
+    });
+
+    socket.on('audioFiles', (files) => {
+      setAudioFiles(files);
+      if (files.length > 0) {
+        setCurrentAudioIndex(0);
+      }
+    });
+
+    socket.on('newAudioFile', ({ deviceName: updatedDeviceName, newFile }) => {
+      if (updatedDeviceName === deviceName) {
+        setAudioFiles((prevFiles) => [...prevFiles, newFile]);
+        setCurrentAudioIndex((prevFiles) => prevFiles.length); // Set index to the newly added file
+      }
+    });
+
+    socket.on('deleteAudioFile', ({ deviceName: updatedDeviceName, newFile }) => {
+      if (updatedDeviceName === deviceName) {
+        setAudioFiles((prevFiles) => prevFiles.filter(file => file !== newFile));
+        if (currentAudioIndex >= audioFiles.length) {
+          setCurrentAudioIndex(0); // Reset to the first file if the current index is out of bounds
+        }
+      }
+    });
+
+    socket.on('updateAudioFiles', ({ deviceName: updatedDeviceName, files }) => {
+      if (updatedDeviceName === deviceName) {
+        setAudioFiles(files);
+        setCurrentAudioIndex(0); // Reset to the first file
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [deviceName]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,86 +85,50 @@ const Phone = () => {
       setIsLoading(false);
       setIsSubmitted(true);
       setStreamUrl(response.data.streamUrl);
-      console.log('Server Response:', response.data);
 
-      // Open Radio Broadcast after receiving server response
-      const newSocket = io(API_BASE_URL, {
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        timeout: 20000,
-        pingInterval: 10000,
-        pingTimeout: 5000
-    });
-      setSocket(newSocket);
-
-      socket.on('connect', () => {
-        console.log('Connected to server');
-        socket.emit('getAudioFiles', deviceName);
-      });
-
-      socket.on('audioFiles', (files) => {
-        console.log('Received audio files:', files);
-        if (files.length > 0) {
-          setAudioFiles(files);
-          setCurrentAudioIndex(0);
-        } else {
-          console.warn('No audio files found for the device');
-        }
-      });
-
-      socket.on('updateAudioFiles', ({ deviceName: updatedDeviceName, files }) => {
-        console.log('Updated audio files:', files);
-        if (updatedDeviceName === deviceName) {
-          setAudioFiles(files);
-          setCurrentAudioIndex(files.length - 1);
-        }
-      });
-
-      socket.on('disconnect', () => {
-        console.log('Socket disconnected');
-      });
-
-      socket.on('reconnect_attempt', (attemptNumber) => {
-        console.log(`Attempting to reconnect, attempt number: ${attemptNumber}`);
-      });
-      
-      socket.on('reconnect_error', (error) => {
-          console.error('Reconnect error:', error);
-      });
-
-      socket.on('keepAlive2', () => {
-          console.error('res');
-          socket.emit('keepAlive');
-      });
-
-      socket.emit('keepAlive');
-
-      return () => {
-        
-        // newSocket.disconnect();
-      };
+      socketRef.current.emit('getAudioFiles', deviceName);
     } catch (error) {
       setIsLoading(false);
       console.error('Error submitting form:', error);
     }
   };
 
+  const handleDeactivate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_BASE_URL}/api/phone/deactivate`,
+        { deviceName },
+        { headers: { 'x-auth-token': token } }
+      );
+    } catch (error) {
+      console.error('Error deactivating device:', error);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleDeactivate);
+    return () => {
+      window.removeEventListener('beforeunload', handleDeactivate);
+    };
+  }, [deviceName]);
+
   const handleAudioEnded = useCallback(() => {
     const nextIndex = currentAudioIndex + 1;
     if (nextIndex < audioFiles.length) {
       setCurrentAudioIndex(nextIndex);
     } else {
-      setCurrentAudioIndex(0); // Reset to the first file if we reach the end
+      setCurrentAudioIndex(0);
+      // chạy file tại client không có tiếng.
+      audioRef.current.play().catch((error) => {
+        console.error('Error playing audio:', error);
+      });
     }
   }, [currentAudioIndex, audioFiles]);
 
   useEffect(() => {
     if (audioRef.current && audioFiles[currentAudioIndex]) {
-      const audioSrc = `${API_BASE_URL}/audio/${deviceName}/${audioFiles[currentAudioIndex]}`;
-      console.log('Setting audio source to:', audioSrc);
-      audioRef.current.src = audioSrc;
+      audioRef.current.src = `${API_BASE_URL}/audio/${deviceName}/${audioFiles[currentAudioIndex]}`;
       audioRef.current.load();
       audioRef.current.play().catch((error) => {
         console.error('Error playing audio:', error);
@@ -130,37 +147,6 @@ const Phone = () => {
       }
     };
   }, [handleAudioEnded]);
-
-  useEffect(() => {
-    const handleUnload = (event) => {
-      // This function runs when the component is unmounted or the page is reloaded/navigated away from
-      const deactivateDevice = async () => {
-        try {
-          const token = localStorage.getItem('token');
-          await axios.post(
-            `${API_BASE_URL}/api/phone/deactivate`,
-            { deviceName },
-            { headers: { 'x-auth-token': token } }
-          );
-          console.log('Device deactivated');
-        } catch (error) {
-          console.error('Error deactivating device:', error);
-        }
-      };
-
-      if (isSubmitted) {
-        deactivateDevice();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleUnload);
-    window.addEventListener('pagehide', handleUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleUnload);
-      window.removeEventListener('pagehide', handleUnload);
-    };
-  }, [deviceName, isSubmitted]);
 
   return (
     <div className="phone-container">

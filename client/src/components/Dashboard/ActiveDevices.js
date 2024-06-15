@@ -4,8 +4,9 @@ import { io } from 'socket.io-client';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import './ActiveDevices.css';
+import config from '../../config';
 
-const API_BASE_URL = 'http://192.168.1.26:3002';
+const API_BASE_URL = config.apiUrl;
 
 const ActiveDevices = () => {
   const [devices, setDevices] = useState([]);
