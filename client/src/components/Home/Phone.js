@@ -35,15 +35,23 @@ const Phone = () => {
       console.log('Server Response:', response.data);
 
       // Open Radio Broadcast after receiving server response
-      const newSocket = io(API_BASE_URL);
+      const newSocket = io(API_BASE_URL, {
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        pingInterval: 10000,
+        pingTimeout: 5000
+    });
       setSocket(newSocket);
 
-      newSocket.on('connect', () => {
+      socket.on('connect', () => {
         console.log('Connected to server');
-        newSocket.emit('getAudioFiles', deviceName);
+        socket.emit('getAudioFiles', deviceName);
       });
 
-      newSocket.on('audioFiles', (files) => {
+      socket.on('audioFiles', (files) => {
         console.log('Received audio files:', files);
         if (files.length > 0) {
           setAudioFiles(files);
@@ -53,7 +61,7 @@ const Phone = () => {
         }
       });
 
-      newSocket.on('updateAudioFiles', ({ deviceName: updatedDeviceName, files }) => {
+      socket.on('updateAudioFiles', ({ deviceName: updatedDeviceName, files }) => {
         console.log('Updated audio files:', files);
         if (updatedDeviceName === deviceName) {
           setAudioFiles(files);
@@ -61,12 +69,28 @@ const Phone = () => {
         }
       });
 
-      newSocket.on('disconnect', () => {
+      socket.on('disconnect', () => {
         console.log('Socket disconnected');
       });
 
+      socket.on('reconnect_attempt', (attemptNumber) => {
+        console.log(`Attempting to reconnect, attempt number: ${attemptNumber}`);
+      });
+      
+      socket.on('reconnect_error', (error) => {
+          console.error('Reconnect error:', error);
+      });
+
+      socket.on('keepAlive2', () => {
+          console.error('res');
+          socket.emit('keepAlive');
+      });
+
+      socket.emit('keepAlive');
+
       return () => {
-        newSocket.disconnect();
+        
+        // newSocket.disconnect();
       };
     } catch (error) {
       setIsLoading(false);

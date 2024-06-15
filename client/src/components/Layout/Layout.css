@@ -1,11 +1,13 @@
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .layout-header {
-  background-color: #ff6600; /* Changed to match your color scheme */
-  padding: 10px 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: fixed;
-  width: 100%;
-  top: 0;
-  z-index: 1000;
+  background-color: #ff7f50;
+  color: white;
+  padding: 15px;
 }
 
 .navbar {
@@ -15,57 +17,40 @@
 }
 
 .navbar-brand {
-  text-decoration: none;
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 1.5em;
   color: white;
-}
-
-.navbar-menu {
-  display: flex;
-  align-items: center;
+  text-decoration: none;
 }
 
 .navbar-nav {
-  display: flex;
-  align-items: center;
   list-style: none;
-  padding: 0;
-  margin: 0;
+  display: flex;
+  gap: 15px;
 }
 
 .nav-item {
-  float: left;
-  margin-left: 20px;
+  margin: 0;
 }
 
-.nav-link, .btn-link {
-  text-decoration: none;
+.nav-link {
   color: white;
-  font-size: 16px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  outline: none;
+  text-decoration: none;
 }
 
-.nav-link:hover, .btn-link:hover {
-  color: #000;
-}
-
-.layout-container {
-  margin-top: 60px; /* Adjust based on the header height */
+.nav-link:hover {
+  text-decoration: underline;
 }
 
 .layout-content {
+  flex-grow: 1;
   padding: 20px;
 }
 
 .layout-footer {
-  background-color: #f8f9fa;
-  padding: 10px 20px;
+  background-color: #ff7f50;
+  color: white;
   text-align: center;
+  padding: 10px;
 }
 
 ul { list-style-type: none; }
-
