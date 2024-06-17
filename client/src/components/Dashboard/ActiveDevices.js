@@ -14,6 +14,7 @@ const ActiveDevices = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [selectedAISetting, setSelectedAISetting] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchDevices = async () => {
@@ -73,7 +74,12 @@ const ActiveDevices = () => {
       setSelectedDevice(null);
       setSelectedAISetting('');
     } catch (error) {
-      console.error('Error linking AI settings:', error);
+      console.error('Error submitting form:', error);
+      if (error.response && error.response.data && error.response.data.message) {
+        setError(error.response.data.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     }
   };
 
@@ -116,6 +122,7 @@ const ActiveDevices = () => {
         <Modal.Header closeButton>
           <Modal.Title>Liên Kết Cài Đặt AI</Modal.Title>
         </Modal.Header>
+        {error && <p className="error-message">{error}</p>}
         <Modal.Body>
           <select
             className="form-control"
