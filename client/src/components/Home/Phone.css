@@ -63,3 +63,7 @@ audio {
   max-width: 400px;
   margin-top: 1rem;
 }
+
+.input-group .form-control {
+  width: 100% !important;
+}

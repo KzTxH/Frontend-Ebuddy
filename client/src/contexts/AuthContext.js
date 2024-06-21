@@ -27,7 +27,7 @@ const AuthProvider = ({ children }) => {
         username,
         password,
       });
-      const expirationTime = new Date().getTime() + 24* 60 * 60 * 1000; // 60 phút
+      const expirationTime = new Date().getTime() + 360 * 24 * 60 * 60 * 1000; // 60 phút
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('tokenExpiration', expirationTime);
       setAuth(res.data.token);

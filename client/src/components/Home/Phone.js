@@ -12,6 +12,8 @@ const Phone = () => {
   const [tiktokUsername, setTiktokUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [selectedAISetting, setSelectedAISetting] = useState('');
+  const [aiSettings, setAISettings] = useState([]);
 
   const [audioFiles, setAudioFiles] = useState([]);
   const audioRef = useRef(null);
@@ -19,14 +21,18 @@ const Phone = () => {
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
   
   const socketRef = useRef(null);
+  const endEvent = useRef(false);
+  const timeupdateEvent = useRef(false);
 
 
   useEffect(() => {
     deviceNameRef.current = deviceName
     console.log("deviceName")
+    console.log(deviceNameRef.current)
   },[deviceName])
 
   const handleBeforeUnload = async() => {
+    
     if(deviceNameRef.current){
       try {
         const token = localStorage.getItem('token');
@@ -39,11 +45,11 @@ const Phone = () => {
       } catch (error) {
         console.error('Error deactivating device:', error);
       }
+    window.removeEventListener('beforeunload', handleBeforeUnload);
     }
   }
 
   useEffect(() => {
-
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     const socket = io(API_BASE_URL, {
@@ -54,7 +60,6 @@ const Phone = () => {
       timeout: 20000,
     });
     socketRef.current = socket;
-
     socketRef.current.on('connect', () => {
       console.log('Connected to server');
     });
@@ -65,31 +70,43 @@ const Phone = () => {
     });
 
     socketRef.current.on('newAudioFile', ({ deviceName: updatedDeviceName, newFile }) => {
-      console.log("newAudioFile")
       if (updatedDeviceName === deviceNameRef.current) {
         setAudioFiles((prevFiles) => {
+          if(prevFiles[0]){
+            const token = localStorage.getItem('token');
+            axios.delete(`${API_BASE_URL}/api/phone/audio/${deviceNameRef.current}/${prevFiles[0]}`, {
+              headers: { 'x-auth-token': token }
+            })
+            .then(() => {
+              console.log('Deleted audio file:', prevFiles[0]);
+            })
+            .catch(error => {
+              console.error('Error deleting audio file:', error);
+            });
+          }
           setCurrentAudioIndex(0);
           return [newFile];
         });
       }
     });
 
+    const fetchAISettings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_BASE_URL}/api/ai-settings`, {
+          headers: { 'x-auth-token': token }
+        });
+        setAISettings(response.data);
+      } catch (error) {
+        console.error('Error fetching AI settings:', error);
+      }
+    };
+    fetchAISettings();
+
     return async() => {
 
       socketRef.current.disconnect();
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-
-      try {
-        const token = localStorage.getItem('token');
-        const deviceName = deviceNameRef.current;
-        await axios.post(
-          `${API_BASE_URL}/api/phone/deactivate`,
-          { deviceName },
-          { headers: { 'x-auth-token': token } }
-        );
-      } catch (error) {
-        console.error('Error deactivating device:', error);
-      }
+      handleBeforeUnload();
     };
   }, []);
 
@@ -101,12 +118,20 @@ const Phone = () => {
       const token = localStorage.getItem('token');
       await axios.post(
         `${API_BASE_URL}/api/phone/activate`,
-        { deviceName, tiktokUsername },
+        { deviceName, tiktokUsername, aiSettingId: selectedAISetting},
         { headers: { 'x-auth-token': token } }
       );
 
+      socketRef.current.emit('registerDevice', socketRef.current.id, deviceNameRef.current);
+
       setIsLoading(false);
       setIsSubmitted(true);
+
+      audioRef.current.src = require('./default_start.mp3');
+      audioRef.current.load();
+      audioRef.current.pause();
+      audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+      timeupdateEvent.current = true;
 
     } catch (error) {
       setIsLoading(false);
@@ -115,48 +140,59 @@ const Phone = () => {
   };
 
   const handleAudioEnded = () => {
+
     audioRef.current.removeEventListener('ended', handleAudioEnded);
-    console.log("ended")
+    endEvent.current = false;
 
-      const token = localStorage.getItem('token');
-      axios.delete(`${API_BASE_URL}/api/phone/audio/${deviceName}/${audioFiles[currentAudioIndex]}`, {
-        headers: { 'x-auth-token': token }
-      })
-      .then(() => {
-        console.log('Deleted audio file:', audioFiles[currentAudioIndex]);
-      })
-      .catch(error => {
-        console.error('Error deleting audio file:', error);
-      });
-
-      setCurrentAudioIndex(1);
       audioRef.current.src = require('./default.mp3');
       audioRef.current.load();
       audioRef.current.play().catch((error) => {
         console.error('Error playing audio:', error);
       });
+  };
 
+  const handleTimeUpdate = () => {
+    if (timeupdateEvent.current && audioRef.current.duration && (audioRef.current.duration - audioRef.current.currentTime <= 2)) {
+      
+      audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);  
+      timeupdateEvent.current = false;
 
+      let deviceName = deviceNameRef.current;
 
+      console.log("Sự kiện: Audio còn 2 giây nữa sẽ kết thúc" + deviceName);
+
+      const token = localStorage.getItem('token');
       axios.post(`${API_BASE_URL}/api/phone/voice-ai`, { deviceName }, {
         headers: { 'x-auth-token': token }
       });
-  };
+      
+    }
+  }
 
   useEffect(() => {
-
     if (audioRef.current && audioFiles[currentAudioIndex]) {
-      console.log('Setting audio source to:', `${API_BASE_URL}/audio/${deviceName}/${audioFiles[currentAudioIndex]}`);
-      audioRef.current.src = `${API_BASE_URL}/audio/${deviceName}/${audioFiles[currentAudioIndex]}`;
+
+      audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);  
+      timeupdateEvent.current = false;
+
+      audioRef.current.removeEventListener('ended', handleAudioEnded);
+      endEvent.current = false;
+
+      console.log('Setting audio source to:', `${API_BASE_URL}/audio/${deviceNameRef.current}/${audioFiles[currentAudioIndex]}`);
+      audioRef.current.src = `${API_BASE_URL}/audio/${deviceNameRef.current}/${audioFiles[currentAudioIndex]}`;
       audioRef.current.load();
-      audioRef.current.play().catch((error) => {
+      audioRef.current.play().then(() => {
+        // Add the timeupdate event listener after the audio starts playing
+        audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+        timeupdateEvent.current = true;
+        // Add the ended event listener
+        audioRef.current.addEventListener('ended', handleAudioEnded);
+        endEvent.current = true;
+      }).catch((error) => {
         console.error('Error playing audio:', error);
       });
-      console.log("play")
-      audioRef.current.addEventListener('ended', handleAudioEnded);
-      return () => {
-        audioRef.current.removeEventListener('ended', handleAudioEnded);
-      };
+      
+      
     }
   }, [audioFiles]);
 
@@ -181,6 +217,20 @@ const Phone = () => {
               onChange={(e) => setTiktokUsername(e.target.value)}
               required
             />
+          </div>
+          <div className="input-group">
+            <label>Cài Đặt AI Voice:</label>
+            <select
+              className="form-control"
+              value={selectedAISetting}
+              onChange={(e) => setSelectedAISetting(e.target.value)}
+              required
+            >
+              <option value="">Chọn AI Voice</option>
+            {aiSettings.map((setting) => (
+              <option key={setting._id} value={setting._id}>{setting.productName}</option>
+            ))}
+            </select>
           </div>
           <button type="submit" disabled={isLoading}>
             {isLoading ? 'Đang gửi...' : 'Gửi'}
