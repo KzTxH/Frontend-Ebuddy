@@ -57,7 +57,8 @@ const ActiveDevices = () => {
             <th>Tên Máy</th>
             <th>Trạng Thái</th>
             <th>Tên Tài Khoản TikTok</th>
-            <th>Voice AI</th>
+            <th>Sản Phẩm</th>
+            <th>Giọng Nói</th>
             <th>Hành Động</th>
           </tr>
         </thead>
@@ -74,6 +75,7 @@ const ActiveDevices = () => {
                 </td>
                 <td>{device.tiktokUsername}</td>
                 <td>{device.aiSetting ? device.aiSetting.productName : "Chưa kết nối"}</td>
+                <td>{device.voiceSetting ? device.voiceSetting.toUpperCase() : "Chưa kết nối"}</td>
                 <td>
                   <Button variant="secondary" onClick={() => {
                     // setSelectedDevice(device.deviceName);
@@ -84,7 +86,7 @@ const ActiveDevices = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="4">Không có thiết bị nào đang hoạt động</td>
+              <td colSpan="6">Không có thiết bị nào đang hoạt động</td>
             </tr>
           )}
         </tbody>

@@ -13,7 +13,8 @@ const Phone = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedAISetting, setSelectedAISetting] = useState('');
-  const [aiSettings, setAISettings] = useState([]);
+  const [aiSettings, setAISettings] = useState([]); 
+  const [selectedVoiceSetting, setSelectedVoiceSetting] = useState([]);
 
   const [audioFiles, setAudioFiles] = useState([]);
   const audioRef = useRef(null);
@@ -23,7 +24,7 @@ const Phone = () => {
   const socketRef = useRef(null);
   const endEvent = useRef(false);
   const timeupdateEvent = useRef(false);
-
+  const voiceSettings = [`sally`,`erin`,`kristy`, `emily`,`lindsey`,`monica`,`Bwyneth`,`carly`];
 
   useEffect(() => {
     deviceNameRef.current = deviceName
@@ -118,7 +119,7 @@ const Phone = () => {
       const token = localStorage.getItem('token');
       await axios.post(
         `${API_BASE_URL}/api/phone/activate`,
-        { deviceName, tiktokUsername, aiSettingId: selectedAISetting},
+        { deviceName, tiktokUsername, aiSettingId: selectedAISetting, selectedVoiceSetting},
         { headers: { 'x-auth-token': token } }
       );
 
@@ -219,17 +220,31 @@ const Phone = () => {
             />
           </div>
           <div className="input-group">
-            <label>Cài Đặt AI Voice:</label>
+            <label>Chọn Sản Phẩm:</label>
             <select
               className="form-control"
               value={selectedAISetting}
               onChange={(e) => setSelectedAISetting(e.target.value)}
               required
             >
+              <option value="">Chọn Sản Phẩm</option>
+              {aiSettings.map((setting) => (
+                <option key={setting._id} value={setting._id}>{setting.productName}</option>
+              ))}
+            </select>
+          </div>
+          <div className="input-group">
+            <label>Cài Đặt Voice:</label>
+            <select
+              className="form-control"
+              value={selectedVoiceSetting}
+              onChange={(e) => setSelectedVoiceSetting(e.target.value)}
+              required
+            >
               <option value="">Chọn AI Voice</option>
-            {aiSettings.map((setting) => (
-              <option key={setting._id} value={setting._id}>{setting.productName}</option>
-            ))}
+              {voiceSettings.map((setting) => (
+                <option key={setting} value={setting}>{setting.toUpperCase()}</option>
+              ))}
             </select>
           </div>
           <button type="submit" disabled={isLoading}>
