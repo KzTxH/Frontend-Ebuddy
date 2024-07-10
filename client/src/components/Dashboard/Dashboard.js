@@ -4,6 +4,7 @@ import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import ActiveDevices from './ActiveDevices';
 import AISettings from './AISettings';
+import Producttypeforlisting from './Producttypeforlisting';
 import { AuthContext } from '../../contexts/AuthContext';
 import { io } from 'socket.io-client';
 import './Dashboard.css';
@@ -74,6 +75,7 @@ const Dashboard = () => {
         <ul>
           <li onClick={() => setCurrentTab('activeDevices')}>Thiết Bị Đang Hoạt Động</li>
           <li onClick={() => setCurrentTab('aiSettings')}>Cài Đặt AI</li>
+          <li onClick={() => setCurrentTab('producttypeforlisting')}>Cài Đặt Loại Sản Phẩm Cho Listing</li>
         </ul>
       </nav>
       <div className="dashboard-content">
@@ -82,6 +84,9 @@ const Dashboard = () => {
         )}
         {currentTab === 'aiSettings' && (
           <AISettings />
+        )}
+        {currentTab === 'producttypeforlisting' && (
+          <Producttypeforlisting />
         )}
       </div>
       <Modal show={showLinkModal} onHide={handleCloseLinkModal}>

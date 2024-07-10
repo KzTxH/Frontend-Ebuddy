@@ -1,0 +1,65 @@
+.producttype-settings-container {
+    padding: 20px;
+  }
+  
+  .producttype-settings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .producttype-settings-table th, .producttype-settings-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .producttype-settings-table th {
+    background-color: #f2f2f2;
+  }
+  
+  .producttype-settings-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .producttype-settings-table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .modal-content {
+    padding: 20px;
+  }
+  
+  .modal-header {
+    background-color: #ff7f50;
+    color: white;
+  }
+  
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  button {
+    background-color: #ff7f50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  button:hover {
+    background-color: #ff6347;
+  }
+  
+  .form-control {
+    margin-bottom: 10px;
+  }
+  
+  .form-control:focus {
+    border-color: #ff7f50;
+    box-shadow: 0 0 5px rgba(255, 127, 80, 0.5);
+  }
+  
